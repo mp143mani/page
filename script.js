@@ -1,89 +1,36 @@
+let select = document.querySelectorAll('.currency')
+let btn = document.getElementById('btn')
+let input = document.getElementById('input')
+fetch('https://api.frankfurter.app/currencies')
+.then(res=>res.json())
+.then(res=>displayDropDown(res))
 
-const itemsPerPage = 12;
-let currentPage = 1;
-let countriesData = [];
-
-// Fetch countries data from the API
-async function fetchCountriesData() {
-  try {
-    const response = await axios.get('https://restcountries.com/v3.1/all');
-    countriesData = response.data;
-    displayCountries(currentPage);
-    setupPagination();
-  } catch (error) {
-    console.log(error);
+function displayDropDown(res){
+  //console.log(Object.entries(res)[2][0])
+  let curr = Object.entries(res)
+  for(let i=0;i<curr.length;i++){
+    let opt = `<option value="${curr[i][0]}">${curr[i][0]}</option>`
+    select[0].innerHTML += opt
+    select[1].innerHTML += opt
   }
 }
 
-// Display countries on the current page
-function displayCountries(page) {
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = page * itemsPerPage;
-  const countryTableBody = document.getElementById('countryTableBody');
-  countryTableBody.innerHTML = '';
+btn.addEventListener('click',()=>{
+  let curr1 = select[0].value
+  let curr2 = select[1].value
+  let inputVal = input.value
+  if(curr1===curr2)
+    alert("Choose different currencies")
+  else
+    convert(curr1,curr2,inputVal)
+});
 
-  for (let i = startIndex; i < endIndex; i++) {
-    if (i >= countriesData.length) break;
+function convert(curr1,curr2,inputVal){
+  const host = 'api.frankfurter.app';
+  fetch(`https://${host}/latest?amount=${inputVal}&from=${curr1}&to=${curr2}`)
+  .then(resp => resp.json())
+  .then((data) => {
+    document.getElementById('result').value = Object.values(data.rates)[0]
+  });
 
-    const country = countriesData[i];
-    const flag = country.flags.svg;
-    const name = country.name.common;
-    const continent = country.region;
-    const currency = Object.values(country.currencies)[0].name;
-    const independent = country.independent ? 'Yes' : 'No';
-    const capital = country.capital;
-    const timezones = country.timezones.join(', ');
-
-    const row = `
-      <tr>
-        <td><img src="${flag}" width="30" height="20" alt="Country Flag"></td>
-        <td>${name}</td>
-        <td>${continent}</td>
-        <td>${currency}</td>
-        <td>${independent}</td>
-        <td>${capital}</td>
-        <td>${timezones}</td>
-      </tr>
-    `;
-    countryTableBody.innerHTML += row;
-  }
 }
-
-// Setup pagination links
-function setupPagination() {
-  const pagination = document.getElementById('pagination');
-  pagination.innerHTML = '';
-
-  const totalPages = Math.ceil(countriesData.length / itemsPerPage);
-
-  for (let i = 1; i <= totalPages; i++) {
-    const li = document.createElement('li');
-    li.className = 'page-item';
-    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
-    pagination.appendChild(li);
-  }
-}
-
-// Change the current page
-function changePage(page) {
-  currentPage = page;
-  displayCountries(currentPage);
-  highlightCurrentPage();
-}
-
-// Highlight the current active page
-function highlightCurrentPage() {
-  const pagination = document.getElementById('pagination');
-  const pages = pagination.getElementsByTagName('a');
-
-  for (let i = 0; i < pages.length; i++) {
-    if (i === currentPage - 1) {
-      pages[i].classList.add('active');
-    } else {
-      pages[i].classList.remove('active');
-    }
-  }
-}
-
-// Fetch countries data on page load
-fetchCountriesData();
